@@ -7,6 +7,7 @@ class Game:
         self.o_img = pygame.transform.scale(pygame.image.load('graphics/Os.png').convert_alpha(), (100, 100))
         pygame.transform.scale(self.o_img, (50, 50))
         self.X_turn = True
+        # a cell 2D list that holds all game cells and their content(X or O)
         self.cells = []
         for column in range(0, 3):
             for row in range(0, 3):
@@ -36,6 +37,8 @@ class Game:
         self.draw_symbol()
 
     def check_winner(self, current_move):
+        global is_active
+        global winner
         row_collection = 0
         column_collection = 0
         for rect in self.cells:
@@ -44,18 +47,33 @@ class Game:
                     row_collection += 1
                 if rect[0].x == current_move[0].x:
                     column_collection += 1
-                    print(column_collection)
-
         if row_collection == 3 or column_collection == 3:
-            print(f'{current_move[1]} wins!')
+            is_active = False
+            winner = current_move[1]
+        if self.cells[0][1] is not None and self.cells[0][1] == self.cells[4][1] and self.cells[0][1] == self.cells[8][1]:
+            is_active = False
+            winner = self.cells[0][1]
+        elif self.cells[2][1] is not None and self.cells[2][1] == self.cells[4][1] and self.cells[2][1] == self.cells[6][1]:
+            is_active = False
+            winner = self.cells[2][1]
+
+    def game_over(self, winner):
+        if winner:
+            winner_surface = game_font.render("X's Won!", False, 'Black')
+        else:
+            winner_surface = game_font.render("O's Won!", False, 'Black')
+        winner_rect = winner_surface.get_rect(center=(screen.get_width() / 2, 50))
+        screen.blit(winner_surface, winner_rect)
+        instructions_surface = game_font.render("Press SPACE to Restart", False, 'Black')
+        instructions_rect = instructions_surface.get_rect(center=(screen.get_width() / 2, 300))
+        screen.blit(instructions_surface, instructions_rect)
 
     def update(self):
         self.draw_table()
 
 
-
-
 pygame.init()
+game_font = pygame.font.Font('graphics/Pixeltype.ttf', 50)
 cell_size = 130
 cell_number = 3
 WIDTH = cell_size * cell_number + 30
@@ -63,6 +81,7 @@ HEIGHT = cell_size * cell_number + 30
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 screen.fill((230, 230, 255))
 game = Game()
+winner = None
 is_active = True
 
 while True:
@@ -74,7 +93,15 @@ while True:
         if event.type == pygame.MOUSEBUTTONDOWN and is_active:
             pos = pygame.mouse.get_pos()
             game.check_cell_collision(pos)
+        if not is_active and keys[pygame.K_SPACE]:
+            screen.fill((230, 230, 255))
+            is_active = True
+            game.__init__()
 
     if is_active:
         game.update()
+
+    else:
+        screen.fill((230, 230, 255))
+        game.game_over(winner)
     pygame.display.update()
