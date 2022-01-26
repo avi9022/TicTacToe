@@ -7,7 +7,7 @@ class Game:
         self.o_img = pygame.transform.scale(pygame.image.load('graphics/Os.png').convert_alpha(), (100, 100))
         pygame.transform.scale(self.o_img, (50, 50))
         self.X_turn = True
-        # a cell 2D list that holds all game cells and their content(X or O)
+        # a 2D list that holds all game cells and their content(None = empty, True = X, False = O)
         self.cells = []
         for column in range(0, 3):
             for row in range(0, 3):
@@ -20,21 +20,20 @@ class Game:
         pygame.draw.line(screen, 'Black', (30, (HEIGHT / 3)), (WIDTH - 30, (HEIGHT / 3)), 10)
         pygame.draw.line(screen, 'Black', (30, (HEIGHT / 3) * 2), (WIDTH - 30, (HEIGHT / 3) * 2), 10)
 
-    def draw_symbol(self):
-        for rect in self.cells:
-            if rect[1] is not None:
-                if rect[1]:
-                    screen.blit(self.x_img, rect[0])
-                else:
-                    screen.blit(self.o_img, rect[0])
+    def draw_symbol(self, symbol):
+        if symbol[1]:
+            screen.blit(self.x_img, symbol[0])
+        else:
+            screen.blit(self.o_img, symbol[0])
 
     def check_cell_collision(self, mouse_pos):
         for rect in self.cells:
             if rect[0].collidepoint(mouse_pos) and rect[1] is None:
                 rect[1] = self.X_turn
                 self.X_turn = not self.X_turn
+                self.draw_symbol(rect)
                 self.check_winner(rect)
-        self.draw_symbol()
+                break
 
     def check_winner(self, current_move):
         global is_active
@@ -58,12 +57,13 @@ class Game:
             winner = self.cells[2][1]
 
     def game_over(self, winner):
-        if winner:
-            winner_surface = game_font.render("X's Won!", False, 'Black')
-        else:
-            winner_surface = game_font.render("O's Won!", False, 'Black')
-        winner_rect = winner_surface.get_rect(center=(screen.get_width() / 2, 50))
-        screen.blit(winner_surface, winner_rect)
+        if winner is not None:
+            if winner:
+                winner_surface = game_font.render("X's Won!", False, 'Black')
+            else:
+                winner_surface = game_font.render("O's Won!", False, 'Black')
+            winner_rect = winner_surface.get_rect(center=(screen.get_width() / 2, 50))
+            screen.blit(winner_surface, winner_rect)
         instructions_surface = game_font.render("Press SPACE to Restart", False, 'Black')
         instructions_rect = instructions_surface.get_rect(center=(screen.get_width() / 2, 300))
         screen.blit(instructions_surface, instructions_rect)
@@ -82,7 +82,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 screen.fill((230, 230, 255))
 game = Game()
 winner = None
-is_active = True
+is_active = False
 
 while True:
     for event in pygame.event.get():
