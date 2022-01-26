@@ -7,6 +7,8 @@ class Game:
         self.o_img = pygame.transform.scale(pygame.image.load('graphics/Os.png').convert_alpha(), (100, 100))
         pygame.transform.scale(self.o_img, (50, 50))
         self.X_turn = True
+        self.filled_cells = 0
+        self.is_first_game = True
         # a 2D list that holds all game cells and their content(None = empty, True = X, False = O)
         self.cells = []
         for column in range(0, 3):
@@ -31,6 +33,7 @@ class Game:
             if rect[0].collidepoint(mouse_pos) and rect[1] is None:
                 rect[1] = self.X_turn
                 self.X_turn = not self.X_turn
+                self.filled_cells += 1
                 self.draw_symbol(rect)
                 self.check_winner(rect)
                 break
@@ -38,6 +41,7 @@ class Game:
     def check_winner(self, current_move):
         global is_active
         global winner
+        # 2 variables that hold how many of the same symbol we  have in a given row or column
         row_collection = 0
         column_collection = 0
         for rect in self.cells:
@@ -49,12 +53,17 @@ class Game:
         if row_collection == 3 or column_collection == 3:
             is_active = False
             winner = current_move[1]
-        if self.cells[0][1] is not None and self.cells[0][1] == self.cells[4][1] and self.cells[0][1] == self.cells[8][1]:
+        if self.cells[0][1] is not None and self.cells[0][1] == self.cells[4][1] and self.cells[0][1] == self.cells[8][
+            1]:
             is_active = False
             winner = self.cells[0][1]
-        elif self.cells[2][1] is not None and self.cells[2][1] == self.cells[4][1] and self.cells[2][1] == self.cells[6][1]:
+        elif self.cells[2][1] is not None and self.cells[2][1] == self.cells[4][1] and self.cells[2][1] == \
+                self.cells[6][1]:
             is_active = False
             winner = self.cells[2][1]
+
+        if self.filled_cells == 9:
+            is_active = False
 
     def game_over(self, winner):
         if winner is not None:
@@ -62,6 +71,10 @@ class Game:
                 winner_surface = game_font.render("X's Won!", False, 'Black')
             else:
                 winner_surface = game_font.render("O's Won!", False, 'Black')
+            winner_rect = winner_surface.get_rect(center=(screen.get_width() / 2, 50))
+            screen.blit(winner_surface, winner_rect)
+        elif not self.is_first_game:
+            winner_surface = game_font.render("Its a Draw!", False, 'Black')
             winner_rect = winner_surface.get_rect(center=(screen.get_width() / 2, 50))
             screen.blit(winner_surface, winner_rect)
         instructions_surface = game_font.render("Press SPACE to Restart", False, 'Black')
