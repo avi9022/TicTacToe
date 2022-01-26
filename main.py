@@ -32,14 +32,27 @@ class Game:
             if rect[0].collidepoint(mouse_pos) and rect[1] is None:
                 rect[1] = self.X_turn
                 self.X_turn = not self.X_turn
+                self.check_winner(rect)
+        self.draw_symbol()
+
+    def check_winner(self, current_move):
+        row_collection = 0
+        column_collection = 0
+        for rect in self.cells:
+            if rect[1] is not None and rect[1] == current_move[1]:
+                if rect[0].y == current_move[0].y:
+                    row_collection += 1
+                if rect[0].x == current_move[0].x:
+                    column_collection += 1
+                    print(column_collection)
+
+        if row_collection == 3 or column_collection == 3:
+            print(f'{current_move[1]} wins!')
 
     def update(self):
         self.draw_table()
-        self.draw_symbol()
 
-class Player:
-    def __init__(self, x):
-        self.is_first = x
+
 
 
 pygame.init()
