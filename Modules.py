@@ -15,7 +15,6 @@ class Game(object):
         self.x_img = pygame.transform.scale(pygame.image.load('graphics/Xs.png').convert_alpha(), (100, 100))
         self.o_img = pygame.transform.scale(pygame.image.load('graphics/Os.png').convert_alpha(), (100, 100))
         self.comp_player = ComputerPlayer()
-
         self.x_turn = True
         self.winner = None
         self.against_computer = False
@@ -32,8 +31,16 @@ class Game(object):
                                         self.cell_size * column + self.pudding + 5, self.cell_size, self.cell_size)
                 # TODO :: dict
                 new_grid.append([cell_rect, None])
-
         return new_grid
+
+    def restart_game(self):
+        self.surface.fill((230, 230, 255))
+        self.is_active = True
+        self.comp_player = ComputerPlayer()
+        self.x_turn = True
+        self.winner = None
+        self.filled_cells = 0
+        self.cells = self.init_grid()
 
     def draw_table(self) -> None:
         pygame.draw.line(self.surface, 'Black', ((self.width / 3), self.pudding),

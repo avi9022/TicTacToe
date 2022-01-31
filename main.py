@@ -31,9 +31,7 @@ while True:
             click = True
         if keys[pygame.K_SPACE] and not game.is_first_game and not game.is_active:
             game.is_active = True
-            screen.fill((230, 230, 255))
-            game.cells = game.init_grid()
-            game.x_turn = True
+            game.restart_game()
 
     if game.is_first_game:
         game.main_menu(click)
