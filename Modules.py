@@ -23,12 +23,17 @@ class Game(object):
         self.is_first_game = True
         # a 2D list that holds all game cells and their content(None = empty, True = X, False = O)
         self.cells = []
+
+    def init_grid(self) -> list:
+        new_grid = []
         for column in range(0, 3):
             for row in range(0, 3):
                 cell_rect = pygame.Rect(self.cell_size * row + self.pudding + 5,
                                         self.cell_size * column + self.pudding + 5, self.cell_size, self.cell_size)
                 # TODO :: dict
-                self.cells.append([cell_rect, None])
+                new_grid.append([cell_rect, None])
+
+        return new_grid
 
     def draw_table(self) -> None:
         pygame.draw.line(self.surface, 'Black', ((self.width / 3), self.pudding),
@@ -121,8 +126,38 @@ class Game(object):
     def update(self):
         self.draw_table()
 
-    def main_menu(self):
-        pass
+    def main_menu(self, is_pressed):
+        mx, my = pygame.mouse.get_pos()
+
+        title_text = self.GAME_FONT.render('Pixel Tic Tac Toe', True, 'Black')
+        comp_play_text = self.GAME_FONT.render('Challenge the COMPUTER!', True, 'Black')
+        single_play_text = self.GAME_FONT.render('Play with a friend', True, 'Black')
+
+        title_rect = title_text.get_rect(midtop=(self.width / 2, 50))
+        comp_play_text_rect = comp_play_text.get_rect(midtop=(self.width / 2, title_rect.y + 200))
+        comp_play_button = pygame.Rect(comp_play_text_rect.x - 20, comp_play_text_rect.y - 10, 400, 50)
+        single_play_text_rect = single_play_text.get_rect(midtop=(self.width / 2, comp_play_button.bottom + 30))
+        single_play_button = pygame.Rect(comp_play_button.x, comp_play_button.bottom + 17, 400, 50)
+
+        self.surface.blit(title_text, title_rect)
+        pygame.draw.rect(self.surface, (210, 224, 191), comp_play_button)
+        self.surface.blit(comp_play_text, comp_play_text_rect)
+        pygame.draw.rect(self.surface, (210, 224, 191), single_play_button)
+        self.surface.blit(single_play_text, single_play_text_rect)
+
+        if comp_play_button.collidepoint(mx, my) and is_pressed:
+            self.against_computer = True
+            self.is_active = True
+            self.is_first_game = False
+            self.cells = self.init_grid()
+            self.surface.fill((230, 230, 255))
+        elif single_play_button.collidepoint(mx, my) and is_pressed:
+            self.against_computer = False
+            self.is_active = True
+            self.is_first_game = False
+            self.cells = self.init_grid()
+            self.surface.fill((230, 230, 255))
+
 
 
 class ComputerPlayer(object):
