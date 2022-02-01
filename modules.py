@@ -1,10 +1,12 @@
 import pygame
 import random
+import asyncio
 
 
 class Game(object):
     def __init__(self, screen, width, height):
-        self.GAME_FONT = pygame.font.Font('graphics/Pixeltype.ttf', 50)
+        self.GAME_FONT = pygame.font.Font('graphics/_pixeltype.ttf', 50)
+        self.clock = pygame.time.Clock()
         self.pudding = 30
         self.cell_size = (width - self.pudding) / 3
         self.cell_number = 3
@@ -12,8 +14,8 @@ class Game(object):
         self.height = height
         self.surface = screen
         self.is_active = False
-        self.x_img = pygame.transform.scale(pygame.image.load('graphics/Xs.png').convert_alpha(), (100, 100))
-        self.o_img = pygame.transform.scale(pygame.image.load('graphics/Os.png').convert_alpha(), (100, 100))
+        self.x_img = pygame.transform.scale(pygame.image.load('graphics/_xs.png').convert_alpha(), (100, 100))
+        self.o_img = pygame.transform.scale(pygame.image.load('graphics/_o.png').convert_alpha(), (100, 100))
         self.comp_player = ComputerPlayer()
         self.x_turn = True
         self.winner = None
@@ -23,13 +25,46 @@ class Game(object):
         # a 2D list that holds all game cells and their content(None = empty, True = X, False = O)
         self.cells = []
 
+    async def start(self):
+        while True:
+            for event in pygame.event.get():
+                keys = pygame.key.get_pressed()
+                if event.type == pygame.QUIT or keys[pygame.K_ESCAPE]:
+                    pygame.quit()
+                    exit()
+                click = False
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.is_active:
+                        if self.against_computer:
+                            if self.x_turn:
+                                pos = pygame.mouse.get_pos()
+                                await self.check_cell_collision(pos)
+                            else:
+                                pass
+                        else:
+                            pos = pygame.mouse.get_pos()
+                            await self.check_cell_collision(pos)
+                    click = True
+                if keys[pygame.K_SPACE] and not self.is_first_game and not self.is_active:
+                    self.is_active = True
+                    self.restart_game()
+
+            if self.is_first_game:
+                self.main_menu(click)
+            elif self.is_active:
+                self.update()
+            else:
+                self.surface.fill((230, 230, 255))
+                self.game_over(self.winner)
+            pygame.display.update()
+            self.clock.tick(60)
+
     def init_grid(self) -> list:
         new_grid = []
         for column in range(0, 3):
             for row in range(0, 3):
                 cell_rect = pygame.Rect(self.cell_size * row + self.pudding + 5,
                                         self.cell_size * column + self.pudding + 5, self.cell_size, self.cell_size)
-                # TODO :: dict
                 new_grid.append([cell_rect, None])
         return new_grid
 
@@ -52,31 +87,31 @@ class Game(object):
         pygame.draw.line(self.surface, 'Black', (30, (self.height / 3) * 2),
                          (self.width - self.pudding, (self.height / 3) * 2), 10)
 
-    def draw_symbol(self, symbol):
-        # TODO :: what if symbol is smaller len then 2
+    async def draw_symbol(self, symbol):
         if len(symbol) == 2:
             if symbol[1]:
                 self.surface.blit(self.x_img, symbol[0])
             else:
                 self.surface.blit(self.o_img, symbol[0])
+        await asyncio.sleep(1)
 
-    def check_cell_collision(self, mouse_pos):
+    async def check_cell_collision(self, mouse_pos):
         for rect in self.cells:
             if rect[0].collidepoint(mouse_pos) and rect[1] is None:
-                self.update_grid(rect)
+                await self.update_game_move(rect)
             else:
                 continue
 
-    def update_grid(self, rect_to_update):
+    async def update_game_move(self, rect_to_update):
         rect_to_update[1] = self.x_turn
         self.x_turn = not self.x_turn
         self.filled_cells += 1
-        self.draw_symbol(rect_to_update)
+        await self.draw_symbol(rect_to_update)
         self.check_winner(rect_to_update)
         if self.against_computer and self.filled_cells < 8 and self.is_active:
-            new_grid_state = self.comp_player.next_turn(self.cells, rect_to_update)
+            new_grid_state = await self.comp_player.next_turn(self.cells, rect_to_update)
             self.cells = new_grid_state[0]
-            self.draw_symbol(self.cells[new_grid_state[1]])
+            await self.draw_symbol(self.cells[new_grid_state[1]])
             self.filled_cells += 1
             self.x_turn = True
             self.check_winner(self.cells[new_grid_state[1]])
@@ -166,13 +201,13 @@ class Game(object):
             self.surface.fill((230, 230, 255))
 
 
-
 class ComputerPlayer(object):
     def __init__(self):
         self.is_first_turn = True
 
-    def next_turn(self, current_grid, opponent_last_move) -> tuple:
+    async def next_turn(self, current_grid, opponent_last_move) -> tuple:
         if self.is_first_turn:
+            self.is_first_turn = False
             return self.randomize_turn(current_grid)
         else:
             possible_win = self.check_possible_win(current_grid)
@@ -182,7 +217,6 @@ class ComputerPlayer(object):
                 return self.check_if_about_to_lose(current_grid, opponent_last_move)
 
     def randomize_turn(self, current_grid) -> tuple:
-        self.is_first_turn = False
         new_grid = current_grid
         turn = random.randint(0, 8)
         while new_grid[turn][1] is not None:
